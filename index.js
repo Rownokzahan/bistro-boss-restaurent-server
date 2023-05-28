@@ -66,6 +66,17 @@ app.get("/carts", async (req, res) => {
   }
 });
 
+app.delete("/carts/:id", async (req, res) => {
+  const id = req.params.id;
+  try {
+    const result = await cartCollection.deleteOne({ _id: new ObjectId(id) });
+    res.send(result);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("An error occurred while deleting cart item.");
+  }
+});
+
 app.post("/carts", async (req, res) => {
   const item = req.body;
   const result = await cartCollection.insertOne(item);
