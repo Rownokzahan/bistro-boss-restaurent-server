@@ -125,6 +125,13 @@ app.post("/menu", verifyJWT, verfyAdmin, async (req, res) => {
   res.send(result);
 });
 
+app.delete("/menu/:id", verifyJWT, verfyAdmin, async (req, res) => {
+  const id = req.params.id;
+  console.log(id);
+  const result = await menuCollection.deleteOne({ _id: new ObjectId(id) });
+  res.send(result);
+});
+
 // review routes
 app.get("/reviews", async (req, res) => {
   const result = await reviewCollection.find().toArray();
