@@ -52,9 +52,32 @@ const verifyJWT = (req, res, next) => {
   });
 };
 
+// use verifyJWT before using verfyAdmin
+const verfyAdmin = async (req, res, next) => {
+  const email = req.decoded.email;
+
+  const user = await userCollection.findOne({ email: email });
+  if (user?.role !== "admin") {
+    return res.status(403).send({ error: true, message: "forbidden access" });
+  }
+  next()
+};
+
 //users routes
-app.get("/users", async (req, res) => {
+app.get("/users", verifyJWT,verfyAdmin, async (req, res) => {
   const result = await userCollection.find().toArray();
+  res.send(result);
+});
+
+app.get("/users/admin/:email", verifyJWT, async (req, res) => {
+  const email = req.params.email;
+
+  if (req.decoded.email !== email) {
+    res.send({ admin: false });
+  }
+
+  const user = await userCollection.findOne({ email: email });
+  const result = { admin: user?.role === "admin" };
   res.send(result);
 });
 
@@ -103,7 +126,7 @@ app.get("/reviews", async (req, res) => {
 });
 
 // cart routes
-app.get("/carts",verifyJWT, async (req, res) => {
+app.get("/carts", verifyJWT, async (req, res) => {
   const email = req.query.email;
 
   const decodedEmail = req.decoded.email;
