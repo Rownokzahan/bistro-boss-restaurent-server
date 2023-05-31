@@ -60,11 +60,11 @@ const verfyAdmin = async (req, res, next) => {
   if (user?.role !== "admin") {
     return res.status(403).send({ error: true, message: "forbidden access" });
   }
-  next()
+  next();
 };
 
 //users routes
-app.get("/users", verifyJWT,verfyAdmin, async (req, res) => {
+app.get("/users", verifyJWT, verfyAdmin, async (req, res) => {
   const result = await userCollection.find().toArray();
   res.send(result);
 });
@@ -116,6 +116,12 @@ app.get("/menu", async (req, res) => {
 app.get("/menu/:id", async (req, res) => {
   const id = req.params.id;
   const result = await menuCollection.find({ _id: new ObjectId(id) }).toArray();
+  res.send(result);
+});
+
+app.post("/menu", verifyJWT, verfyAdmin, async (req, res) => {
+  const newFood = req.body;
+  const result = await menuCollection.insertOne(newFood);
   res.send(result);
 });
 
