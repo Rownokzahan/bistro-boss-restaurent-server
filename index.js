@@ -115,13 +115,26 @@ app.get("/menu", async (req, res) => {
 
 app.get("/menu/:id", async (req, res) => {
   const id = req.params.id;
-  const result = await menuCollection.find({ _id: new ObjectId(id) }).toArray();
+  const result = await menuCollection.findOne({ _id: new ObjectId(id) });
   res.send(result);
 });
 
 app.post("/menu", verifyJWT, verfyAdmin, async (req, res) => {
   const newFood = req.body;
   const result = await menuCollection.insertOne(newFood);
+  res.send(result);
+});
+
+app.patch("/menu/:id", verifyJWT, verfyAdmin, async (req, res) => {
+  const id = req.params.id;
+  const updatedFood = req.body;
+  const filter = { _id: new ObjectId(id) };
+  const query = {
+    $set: {
+      ...updatedFood,
+    },
+  };
+  const result = await menuCollection.updateOne(filter, query);
   res.send(result);
 });
 
