@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
+const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY);
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const port = process.env.PORT;
 const app = express();
@@ -25,6 +26,7 @@ const userCollection = client.db("bistroDB").collection("users");
 const menuCollection = client.db("bistroDB").collection("menu");
 const reviewCollection = client.db("bistroDB").collection("reviews");
 const cartCollection = client.db("bistroDB").collection("carts");
+const paymentCollection = client.db("bistroDB").collection("payments");
 
 //jwt routes
 app.post("/jwt", (req, res) => {
@@ -192,6 +194,30 @@ app.post("/carts", async (req, res) => {
   const item = req.body;
   const result = await cartCollection.insertOne(item);
   res.send(result);
+});
+
+// create payment intent
+app.post("/create-payment-intent", verifyJWT, async (req, res) => {
+  const { price } = req.body;
+  const amount = parseInt(price) * 100;
+
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: amount,
+    currency: "usd",
+    payment_method_types: ["card"],
+  });
+
+  res.send({
+    clientSecret: paymentIntent.client_secret,
+  });
+});
+
+app.post("/payments", verifyJWT, async (req, res) => {
+  const payment = req.body;
+  const insertResult = await paymentCollection.insertOne(payment);
+  const query = { _id: { $in: payment.cartIds.map((id) => new ObjectId(id)) } };
+  const deleteResult = await cartCollection.deleteMany(query);
+  res.send({ insertResult, deleteResult });
 });
 
 app.get("/", (req, res) => {
